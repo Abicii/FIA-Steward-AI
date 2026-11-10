@@ -7,6 +7,7 @@ with batched ingestion and similarity search returning rich citation metadata.
 
 from __future__ import annotations
 
+import hashlib
 import logging
 import os
 from pathlib import Path
@@ -118,16 +119,27 @@ def ingest_chunks(
     chunks: list[DocumentChunk],
     collection_name: str = DEFAULT_COLLECTION,
     batch_size: int = 64,
+    purge_existing_source: bool = True,
 ) -> int:
     """
     Generates embeddings and upserts document chunks into ChromaDB in batches.
-    Returns the total number of chunks ingested.
+    Uses deterministic IDs and purges existing source chunks to eliminate duplicates.
     """
     if not chunks:
         return 0
 
     embedder = get_embedding_function()
     collection = get_or_create_collection(collection_name)
+
+    # Purge existing chunks for this source file to prevent duplicate accumulation
+    if purge_existing_source:
+        sources = {c.metadata.get("source") for c in chunks if c.metadata.get("source")}
+        for src in sources:
+            try:
+                collection.delete(where={"source": src})
+                logger.info(f"Purged existing chunks for source '{src}' before re-ingestion.")
+            except Exception:
+                pass
 
     total_ingested = 0
     total_chunks = len(chunks)
@@ -136,10 +148,16 @@ def ingest_chunks(
         batch = chunks[i : i + batch_size]
         texts = [c.page_content for c in batch]
         metadatas = [c.metadata for c in batch]
-        ids = [
-            f"{c.metadata.get('source', 'doc')}_{c.metadata.get('chunk_index', idx)}"
-            for idx, c in enumerate(batch, start=i)
-        ]
+
+        # Deterministic IDs: sha256 hash of (source + chunk_index + text preview)
+        ids = []
+        for idx, c in enumerate(batch, start=i):
+            raw_key = f"{c.metadata.get('source', '')}_{c.metadata.get('chunk_index', idx)}_{c.page_content[:60]}"
+            content_hash = hashlib.sha256(raw_key.encode("utf-8")).hexdigest()[:16]
+            doc_type = c.metadata.get("doc_type", "doc")
+            sec = c.metadata.get("section", "sec")
+            art = c.metadata.get("article_number", "art")
+            ids.append(f"{doc_type}_{sec}_{art}_{content_hash}")
 
         embeddings = embedder.embed_documents(texts)
 
@@ -159,19 +177,37 @@ def search_similar(
     query: str,
     k: int = 4,
     collection_name: str = DEFAULT_COLLECTION,
+    doc_type: str | None = None,
+    section: str | None = None,
 ) -> list[dict[str, Any]]:
     """
     Queries ChromaDB and returns top-k matching chunks with similarity scores and citation metadata.
+    Supports optional metadata filtering by doc_type ('sporting', 'technical') and section ('B', 'C').
     """
     embedder = get_embedding_function()
     collection = get_or_create_collection(collection_name)
 
     query_embedding = embedder.embed_query(query)
-    results = collection.query(
-        query_embeddings=[query_embedding],
-        n_results=k,
-        include=["documents", "metadatas", "distances"],
-    )
+
+    query_kwargs: dict[str, Any] = {
+        "query_embeddings": [query_embedding],
+        "n_results": k,
+        "include": ["documents", "metadatas", "distances"],
+    }
+
+    # Apply metadata filter if provided
+    where_clauses: list[dict[str, Any]] = []
+    if doc_type:
+        where_clauses.append({"doc_type": doc_type.lower().strip()})
+    if section:
+        where_clauses.append({"section": section.upper().strip()})
+
+    if len(where_clauses) == 1:
+        query_kwargs["where"] = where_clauses[0]
+    elif len(where_clauses) > 1:
+        query_kwargs["where"] = {"$and": where_clauses}
+
+    results = collection.query(**query_kwargs)
 
     formatted: list[dict[str, Any]] = []
     if not results or not results.get("documents"):
@@ -188,6 +224,8 @@ def search_similar(
             {
                 "content": doc,
                 "citation": meta.get("citation", ""),
+                "doc_type": meta.get("doc_type", ""),
+                "section": meta.get("section", ""),
                 "article_number": meta.get("article_number", ""),
                 "article_title": meta.get("article_title", ""),
                 "sub_section": meta.get("sub_section", ""),

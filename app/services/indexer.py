@@ -18,16 +18,20 @@ def index_markdown_text(
     markdown_text: str,
     filename: str = "document.md",
     collection_name: str = DEFAULT_COLLECTION,
+    doc_type: str | None = None,
+    section: str | None = None,
     chunk_size: int = 1000,
     chunk_overlap: int = 150,
 ) -> dict[str, Any]:
     """
     Chunks and indexes markdown text directly from memory into ChromaDB.
-    Returns indexing metrics including total chunks and unique articles identified.
+    Returns indexing metrics including total chunks, doc_type, and unique articles identified.
     """
     chunks = chunk_document(
         markdown_text=markdown_text,
         filename=filename,
+        doc_type=doc_type,
+        section=section,
         chunk_size=chunk_size,
         chunk_overlap=chunk_overlap,
     )
@@ -36,6 +40,8 @@ def index_markdown_text(
         return {
             "source": filename,
             "status": "empty",
+            "doc_type": doc_type or "unknown",
+            "section": section or "",
             "chunks_indexed": 0,
             "articles": [],
         }
@@ -51,9 +57,14 @@ def index_markdown_text(
         }
     )
 
+    resolved_doc_type = chunks[0].metadata.get("doc_type", doc_type) if chunks else doc_type
+    resolved_section = chunks[0].metadata.get("section", section) if chunks else section
+
     return {
         "source": filename,
         "status": "success",
+        "doc_type": resolved_doc_type,
+        "section": resolved_section,
         "chunks_indexed": total_ingested,
         "collection": collection_name,
         "total_articles": len(unique_articles),
@@ -64,6 +75,8 @@ def index_markdown_text(
 def index_markdown_file(
     file_path: Path,
     collection_name: str = DEFAULT_COLLECTION,
+    doc_type: str | None = None,
+    section: str | None = None,
     chunk_size: int = 1000,
     chunk_overlap: int = 150,
 ) -> dict[str, Any]:
@@ -71,12 +84,14 @@ def index_markdown_file(
     if not file_path.exists() or not file_path.is_file():
         raise FileNotFoundError(f"Markdown file not found at: {file_path}")
 
-    logger.info(f"Indexing markdown file: {file_path}")
+    logger.info(f"Indexing markdown file: {file_path} (doc_type={doc_type}, section={section})")
     content = file_path.read_text(encoding="utf-8")
     return index_markdown_text(
         markdown_text=content,
         filename=file_path.name,
         collection_name=collection_name,
+        doc_type=doc_type,
+        section=section,
         chunk_size=chunk_size,
         chunk_overlap=chunk_overlap,
     )

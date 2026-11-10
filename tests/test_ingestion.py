@@ -24,4 +24,4 @@ def test_chunking_citation_consistency():
     for c in chunks:
         assert c.metadata["article_number"] == "B1"
         assert "ORGANISATION OF A COMPETITION" in c.metadata["article_title"]
-        assert c.metadata["citation"].startswith("ARTICLE B1")
+        assert "ARTICLE B1" in c.metadata["citation"]

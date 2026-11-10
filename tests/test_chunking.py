@@ -71,6 +71,19 @@ def test_chunk_document_metadata_and_citations():
     assert any("B1.1" in s or "B1.2" in s for s in sub_sections)
 
 
+def test_chunk_document_with_doc_type():
+    chunks = chunk_document(
+        SAMPLE_REGULATION_MD,
+        filename="custom_file.md",
+        doc_type="technical",
+        section="C",
+    )
+    assert len(chunks) > 0
+    assert chunks[0].metadata["doc_type"] == "technical"
+    assert chunks[0].metadata["section"] == "C"
+    assert "[TECHNICAL]" in chunks[0].metadata["citation"]
+
+
 def test_find_nearest_sub_section():
     text = "## B5.12 Virtual Safety Car (VSC)\nWhen the VSC is deployed..."
     sub_sec = find_nearest_sub_section(text)

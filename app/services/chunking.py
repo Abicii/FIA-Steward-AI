@@ -148,6 +148,20 @@ def extract_article_sections(markdown_text: str) -> list[dict[str, Any]]:
     return sections
 
 
+def infer_doc_type(filename: str, text: str = "") -> tuple[str, str]:
+    """Infers (doc_type, section) from filename or content header."""
+    lower_name = filename.lower()
+    lower_text = text[:1500].lower() if text else ""
+
+    if "technical" in lower_name or "section c" in lower_text or "technical regulations" in lower_text:
+        return "technical", "C"
+    if "sporting" in lower_name or "section b" in lower_text or "sporting regulations" in lower_text:
+        return "sporting", "B"
+    if "financial" in lower_name or "section d" in lower_text or "financial regulations" in lower_text:
+        return "financial", "D"
+    return "regulations", ""
+
+
 def find_nearest_sub_section(chunk_text: str, current_sub_section: str = "") -> str:
     """Detects if a new sub-section header exists within the chunk."""
     match = SUB_SECTION_PATTERN.search(chunk_text)
@@ -161,6 +175,8 @@ def find_nearest_sub_section(chunk_text: str, current_sub_section: str = "") -> 
 def chunk_document(
     markdown_text: str,
     filename: str = "document.md",
+    doc_type: str | None = None,
+    section: str | None = None,
     chunk_size: int = 1000,
     chunk_overlap: int = 150,
 ) -> list[DocumentChunk]:
@@ -168,22 +184,27 @@ def chunk_document(
     Main chunking pipeline for a regulatory markdown file:
     1. Splits document by Article sections.
     2. Recursively splits each Article into manageable chunks (~1000 chars).
-    3. Injects citation metadata (Article number, Article title, sub-section, source).
+    3. Injects citation and domain metadata (doc_type, section, Article number, title, sub-section, source).
     """
+    inferred_type, inferred_sec = infer_doc_type(filename, markdown_text)
+    resolved_doc_type = (doc_type or inferred_type).lower().strip()
+    resolved_section = (section or inferred_sec).upper().strip()
+
     sections = extract_article_sections(markdown_text)
     chunks: list[DocumentChunk] = []
     chunk_counter = 0
 
-    for section in sections:
-        article_type = section["article_type"]
-        article_num = section["article_number"]
-        article_title = section["article_title"]
-        section_text = section["text"]
+    for sec in sections:
+        article_type = sec["article_type"]
+        article_num = sec["article_number"]
+        article_title = sec["article_title"]
+        section_text = sec["text"]
 
+        prefix = f"[{resolved_doc_type.upper()}] " if resolved_doc_type else ""
         base_citation = (
-            f"{article_type} {article_num}: {article_title}"
+            f"{prefix}{article_type} {article_num}: {article_title}"
             if article_type != "PREAMBLE"
-            else "Preamble & Table of Contents"
+            else f"{prefix}Preamble & Table of Contents"
         )
 
         sub_chunks = _split_text_recursively(
@@ -209,6 +230,8 @@ def chunk_document(
 
             metadata = {
                 "source": filename,
+                "doc_type": resolved_doc_type,
+                "section": resolved_section,
                 "article_type": article_type,
                 "article_number": article_num,
                 "article_title": article_title,

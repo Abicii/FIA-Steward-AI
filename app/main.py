@@ -24,6 +24,9 @@ PARSED_DATA_DIR = PROJECT_ROOT / "parsed data"
 class IngestRequest(BaseModel):
     filename: str | None = None
     collection_name: str = DEFAULT_COLLECTION
+    doc_type: str | None = None  # e.g. "sporting", "technical", "financial"
+    section: str | None = None   # e.g. "B", "C", "D"
+    reset: bool = False          # If True, wipes the collection first
 
 
 def _safe_stem(filename: str | None) -> str:
@@ -114,10 +117,20 @@ def ingest_cleaned_markdown(req: IngestRequest | None = None):
     """
     Independent ingestion stage:
     Reads cleaned .md file(s) from 'parsed data/', splits into chunks with Article citation
-    metadata, generates FastEmbed embeddings, and stores them in ChromaDB.
+    and domain metadata (doc_type, section), generates FastEmbed embeddings, and stores them in ChromaDB.
     """
     collection = req.collection_name if req else DEFAULT_COLLECTION
     filename = req.filename if req else None
+    doc_type = req.doc_type if req else None
+    section = req.section if req else None
+
+    # Handle optional collection reset before ingesting
+    if req and req.reset:
+        client = get_chroma_client()
+        try:
+            client.delete_collection(collection)
+        except Exception:
+            pass
 
     if filename and filename.lower() != "all":
         target_path = PARSED_DATA_DIR / filename
@@ -129,7 +142,12 @@ def ingest_cleaned_markdown(req: IngestRequest | None = None):
                 detail=f"File '{filename}' not found in '{PARSED_DATA_DIR.name}' directory.",
             )
         try:
-            return index_markdown_file(target_path, collection_name=collection)
+            return index_markdown_file(
+                file_path=target_path,
+                collection_name=collection,
+                doc_type=doc_type,
+                section=section,
+            )
         except Exception as exc:
             raise HTTPException(status_code=500, detail=f"Ingestion failed: {exc}") from exc
 
@@ -151,6 +169,8 @@ def index_alias(req: IngestRequest | None = None):
 def search_regulations(
     q: str = Query(..., description="Query to search regulations for."),
     k: int = Query(default=4, ge=1, le=20, description="Number of chunks to return."),
+    doc_type: str | None = Query(default=None, description="Filter by domain (e.g. 'sporting', 'technical')."),
+    section: str | None = Query(default=None, description="Filter by section letter (e.g. 'B', 'C')."),
     collection_name: str = Query(
         default=DEFAULT_COLLECTION,
         description="Collection to query.",
@@ -158,14 +178,91 @@ def search_regulations(
 ):
     """
     Semantic similarity search across indexed regulations.
-    Returns matching chunks along with complete citation metadata.
+    Supports cross-domain search by default, or scoped search with doc_type/section filter.
     """
     try:
-        results = search_similar(query=q, k=k, collection_name=collection_name)
+        results = search_similar(
+            query=q,
+            k=k,
+            collection_name=collection_name,
+            doc_type=doc_type,
+            section=section,
+        )
         return {
             "query": q,
+            "filter": {"doc_type": doc_type, "section": section},
             "count": len(results),
             "results": results,
         }
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"Search failed: {exc}") from exc
+
+
+@app.get("/inspect")
+def inspect_collection(
+    limit: int = Query(default=5, ge=1, le=50, description="Number of sample chunks to return."),
+    collection_name: str = Query(default=DEFAULT_COLLECTION, description="Collection name to inspect."),
+):
+    """
+    Inspects ChromaDB: returns collection name, total count of stored chunks,
+    and a peek at sample chunks with citations.
+    """
+    try:
+        from app.services.vectorstore import get_or_create_collection
+
+        collection = get_or_create_collection(collection_name)
+        count = collection.count()
+        peek = collection.get(limit=limit, include=["documents", "metadatas"])
+        samples = []
+        for cid, doc, meta in zip(
+            peek.get("ids", []),
+            peek.get("documents", []),
+            peek.get("metadatas", []),
+        ):
+            samples.append(
+                {
+                    "id": cid,
+                    "citation": meta.get("citation", ""),
+                    "article_number": meta.get("article_number", ""),
+                    "sub_section": meta.get("sub_section", ""),
+                    "content_snippet": doc[:250] + "..." if len(doc) > 250 else doc,
+                    "metadata": meta,
+                }
+            )
+        return {
+            "collection": collection_name,
+            "total_chunks": count,
+            "sample_count": len(samples),
+            "samples": samples,
+        }
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Inspection failed: {exc}") from exc
+
+
+@app.delete("/clear")
+@app.post("/clear")
+def clear_database(
+    collection_name: str = Query(default=DEFAULT_COLLECTION, description="Collection to clear"),
+):
+    """
+    Clears the specified collection from ChromaDB.
+    """
+    try:
+        from app.services.vectorstore import get_chroma_client
+
+        client = get_chroma_client()
+        try:
+            client.delete_collection(collection_name)
+            return {
+                "status": "success",
+                "message": f"Collection '{collection_name}' was successfully deleted.",
+            }
+        except Exception as exc:
+            return {
+                "status": "not_found",
+                "message": f"Collection '{collection_name}' did not exist or was already cleared: {exc}",
+            }
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Failed to clear database: {exc}") from exc
+
+
