@@ -1,0 +1,19 @@
+services:
+  api:
+    build: .
+    ports: ["8000:8000"]
+    env_file: .env
+    environment:
+      CHROMA_HOST: chroma
+    volumes:
+      - ./:/code          # live reload while you develop
+    depends_on: [chroma]
+
+  chroma:
+    image: chromadb/chroma
+    ports: ["8001:8000"]
+    volumes:
+      - chroma_data:/data   # check the image docs for the exact persist path for your version
+
+volumes:
+  chroma_data:

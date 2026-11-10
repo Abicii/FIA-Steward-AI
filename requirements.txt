@@ -1,0 +1,11 @@
+fastapi
+uvicorn[standard]
+chromadb
+pytest
+httpx
+llama-cloud>=2.8
+python-multipart
+langchain>=0.2.0
+langchain-community
+langchain-chroma
+fastembed
