@@ -3,3 +3,5 @@ uvicorn[standard]
 chromadb
 pytest
 httpx
+llama-cloud>=2.8
+python-multipart
