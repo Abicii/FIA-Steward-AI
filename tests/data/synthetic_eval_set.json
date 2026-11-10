@@ -1,0 +1,162 @@
+[
+  {
+    "id": 1,
+    "query": "What are the rules regarding declaring low grip conditions in the pit lane?",
+    "expected_article": "B1",
+    "expected_sub_section": "B1.6",
+    "category": "Pit Lane & Safety",
+    "ground_truth_excerpt": "The Race Director may at any time and at their sole discretion declare Low Grip Conditions"
+  },
+  {
+    "id": 2,
+    "query": "What penalty is imposed if a driver enters the pit lane when it is closed during a TTCS?",
+    "expected_article": "B1",
+    "expected_sub_section": "B1.7",
+    "category": "Penalties & Infringements",
+    "ground_truth_excerpt": "During a TTCS, a Stop-and-Go Penalty will be imposed on any driver who entered the Pit Lane whilst it was closed"
+  },
+  {
+    "id": 3,
+    "query": "Can a driver drive unnecessarily slowly or erratically on track?",
+    "expected_article": "B1",
+    "expected_sub_section": "B1.8",
+    "category": "Driving Standards",
+    "ground_truth_excerpt": "At no time may an F1 Car be driven unnecessarily slowly, erratically or in a manner which could be deemed potentially dangerous"
+  },
+  {
+    "id": 4,
+    "query": "What should a driver do with the steering wheel when abandoning an F1 car on circuit?",
+    "expected_article": "B1",
+    "expected_sub_section": "B1.9",
+    "category": "Driving Standards",
+    "ground_truth_excerpt": "ERS shut down and with the steering wheel in place. When abandoning their F1 Car on circuit a driver must obey the instructions"
+  },
+  {
+    "id": 5,
+    "query": "Who appoints the stewards and Race Director for a competition?",
+    "expected_article": "B1",
+    "expected_sub_section": "B1.3",
+    "category": "Race Governance",
+    "ground_truth_excerpt": "From among holders of an FIA Super Licence the following officials will be nominated by the FIA: stewards, Race Director"
+  },
+  {
+    "id": 6,
+    "query": "What happens if a car is found underweight during post-session scrutineering?",
+    "expected_article": "B3",
+    "expected_sub_section": "B3.2",
+    "category": "Technical & Scrutineering",
+    "ground_truth_excerpt": "In the event of any breach of these provisions for the weighing of F1 Cars save where the deficiency results from accidental loss"
+  },
+  {
+    "id": 7,
+    "query": "What works are permitted on cars under Parc Ferme conditions?",
+    "expected_article": "B2",
+    "expected_sub_section": "1.1",
+    "category": "Parc Ferme",
+    "ground_truth_excerpt": "PARC FERME REQUIRED & PERMITTED WORKS: Brake friction material may be removed, measured, de-glazed and refitted"
+  },
+  {
+    "id": 8,
+    "query": "What is the procedure when the Virtual Safety Car VSC is deployed?",
+    "expected_article": "B5",
+    "expected_sub_section": "B5.12",
+    "category": "Safety Car & Race Control",
+    "ground_truth_excerpt": "The Virtual Safety Car will be used when double waved yellow flags are needed on any section of track"
+  },
+  {
+    "id": 9,
+    "query": "What message is sent to Competitors if a session is suspended by red flag?",
+    "expected_article": "B5",
+    "expected_sub_section": "B5.14",
+    "category": "Safety Car & Race Control",
+    "ground_truth_excerpt": "If the Race Director deems it is necessary to suspend a TTCS, the message RED FLAG will be sent"
+  },
+  {
+    "id": 10,
+    "query": "How is a false start detected and penalised during a standing start?",
+    "expected_article": "B5",
+    "expected_sub_section": "B5.11",
+    "category": "Start Procedures",
+    "ground_truth_excerpt": "False Start provisions and penalties for starting before the start signal"
+  },
+  {
+    "id": 11,
+    "query": "Who is the sole tyre manufacturer and supplier for the Championship?",
+    "expected_article": "B6",
+    "expected_sub_section": "B6.1",
+    "category": "Tyre Regulations",
+    "ground_truth_excerpt": "The single tyre manufacturer will be the sole tyre supplier for all Events during the Championship"
+  },
+  {
+    "id": 12,
+    "query": "What are the rules regarding control and allocation of dry and wet tyres?",
+    "expected_article": "B6",
+    "expected_sub_section": "B6.2",
+    "category": "Tyre Regulations",
+    "ground_truth_excerpt": "Other than in cases of force majeure, all tyres intended for use at a Competition must be presented"
+  },
+  {
+    "id": 13,
+    "query": "What are the restrictions on Driver Adjustable Bodywork systems?",
+    "expected_article": "B7",
+    "expected_sub_section": "B7.1",
+    "category": "Technical & Aerodynamics",
+    "ground_truth_excerpt": "Driver Adjustable Bodywork limitations and usage requirements"
+  },
+  {
+    "id": 14,
+    "query": "What Power Unit components are limited per driver over a Championship season?",
+    "expected_article": "B8",
+    "expected_sub_section": "B8.2",
+    "category": "Engine & Power Unit",
+    "ground_truth_excerpt": "The only Power Unit that may be used at a Competition during the Championship is a Power Unit constituted only of elements"
+  },
+  {
+    "id": 15,
+    "query": "What are the curfew hours and restricted periods for team operational personnel?",
+    "expected_article": "B9",
+    "expected_sub_section": "B9.5",
+    "category": "Operational & Personnel",
+    "ground_truth_excerpt": "Restricted Period One and Restricted Period Two operational personnel limitations"
+  },
+  {
+    "id": 16,
+    "query": "What mandatory media activities and press conferences must drivers attend?",
+    "expected_article": "B10",
+    "expected_sub_section": "B10.1",
+    "category": "Media & Ceremonies",
+    "ground_truth_excerpt": "Media Activities: Day before practice, post-qualifying and post-race media engagements"
+  },
+  {
+    "id": 17,
+    "query": "What are the testing restrictions for testing of current cars TCC outside a competition?",
+    "expected_article": "B11",
+    "expected_sub_section": "B11.2",
+    "category": "Testing & Track Running",
+    "ground_truth_excerpt": "Provisions for TCC Track Running Outside a Competition"
+  },
+  {
+    "id": 18,
+    "query": "What is the procedure for cars leaving the pit lane during a red flag suspension?",
+    "expected_article": "B5",
+    "expected_sub_section": "B5.14",
+    "category": "Safety Car & Race Control",
+    "ground_truth_excerpt": "During a suspended session the pit exit will be closed and all cars must enter the pit lane"
+  },
+  {
+    "id": 19,
+    "query": "How many drivers is a team permitted to substitute during a competition?",
+    "expected_article": "B1",
+    "expected_sub_section": "B1.7",
+    "category": "Driver Substitutions",
+    "ground_truth_excerpt": "Changes Of Driver provisions and nomination deadlines"
+  },
+  {
+    "id": 20,
+    "query": "Under what conditions can the Safety Car be called into the pit lane to end the SC period?",
+    "expected_article": "B5",
+    "expected_sub_section": "B5.13",
+    "category": "Safety Car & Race Control",
+    "ground_truth_excerpt": "When the clerk of the course or Race Director decides it is safe to call in the Safety Car"
+  }
+]
